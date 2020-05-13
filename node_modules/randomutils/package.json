@@ -1,0 +1,23 @@
+{
+  "name": "randomutils",
+  "version": "1.0.0",
+  "description": "Tool for generate random numbers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://yiwenl@github.com/yiwenl/randomUtils.git"
+  },
+  "keywords": [
+    "math",
+    "random"
+  ],
+  "author": "Yi-Wen Lin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yiwenl/randomUtils/issues"
+  },
+  "homepage": "https://github.com/yiwenl/randomUtils#readme"
+}

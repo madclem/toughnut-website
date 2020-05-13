@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "toughnut-website",
+  "engines": {
+    "node": "12.x.x",
+    "yarn": "1.22.x"
+  },
+  "scripts": {
+    "build": "yarn workspaces run build"
+  },
+  "workspaces": [
+    "webgl",
+    "app"
+  ]
+}
