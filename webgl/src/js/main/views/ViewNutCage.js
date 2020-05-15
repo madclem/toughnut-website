@@ -160,6 +160,11 @@ export class ViewNutCage extends Entity3D {
 		// this.rotationX = rotX;
 	}
 
+	updateRotation() {
+		const { x, y, z, w } = this.body.quaternion;
+		this.setRotationFromQuaternion([x, y, z, w]);
+	}
+
 	render(textureRad, textureIrr) {
 		if (!this.active) return; // this.active comes from View3D
 		

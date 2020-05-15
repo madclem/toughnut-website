@@ -16,12 +16,12 @@ export class StateProjectsToHome extends StateDefault {
 		const magicCube = this.scene._vMagicCube;
 		const textureSwap = this.scene._vTextureSwap;
 		
-		const originalRotX = magicCube.rotationX; // remeber that rotation
 		cage.start();
 		nut.start();
 		
 		mat4.identity(tempMat4);
 		magicCube.saveMatrix(tempMat4);
+		const originalRotX = magicCube.rotationX; // remeber that rotation
 		magicCube.toggleMatrixMatching(true, cage._matrix);
 		// setTimeout(()=>{
 
@@ -31,8 +31,43 @@ export class StateProjectsToHome extends StateDefault {
 		// }, 10)
 		
 		// return;
-		const duration = 1.6;
+		const duration = 2.6;
 		const ease = 'sine.inout';
+		
+
+		
+		const w = window.innerWidth; // get the w out of the h ratio if windowW > windowH
+		const h = window.innerHeight;
+
+
+		const initValue = cage.rotationX;
+		const extra = -(originalRotX % (Math.PI / 2));
+		const o = { rotX: initValue - extra, scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
+		cage.setRot(o.rotX);
+		cage.updateRotation();
+		magicCube.rotationX = originalRotX + extra;
+		magicCube._update();
+
+		// cage.fadeTo(0, 0.2, 'sine.in');
+		// return;
+		// const originalRotX = magicCube.rotationX;
+		const nRot = 0.5;
+		gsap.to(o, duration, {
+			rotX: o.rotX - Math.PI * 2 * nRot + extra, // + originalRotX % Math.PI,
+			ease,
+			// ease: Back.easeOut.config(1.25),
+			onUpdate: () => {
+				cage.setRot(o.rotX);
+				magicCube.rotationX = originalRotX + extra;
+				magicCube.extraAngle = initValue - o.rotX - extra;
+			},
+			onComplete: () => {
+				magicCube.saveMatrix();
+				magicCube.toggleMatrixMatching(false, null);
+			}
+
+		});
+
 		OrbitalControlTween.tween({
 			radius: 3.75,
 			ease,
@@ -40,32 +75,6 @@ export class StateProjectsToHome extends StateDefault {
 			centerX: 0,
 			rx: 0,
 			ry: 0,
-		});
-
-		// this.scene.orbitalControl.radius.value = 3.75;
-		
-		const w = window.innerWidth; // get the w out of the h ratio if windowW > windowH
-		const h = window.innerHeight;
-
-
-		const initValue = cage.rotationX;
-		const o = { rotX: initValue, scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
-		// const originalRotX = magicCube.rotationX;
-		const nRot = 0.5;
-		gsap.to(o, duration, {
-			rotX: o.rotX - Math.PI * 2 * nRot,
-			ease,
-			// ease: Back.easeOut.config(1.25),
-			onUpdate: () => {
-				cage.setRot(o.rotX);
-				// magicCube.rotationX = originalRotX;
-				magicCube.extraAngle = initValue - o.rotX;
-			},
-			onComplete: () => {
-				magicCube.saveMatrix();
-				magicCube.toggleMatrixMatching(false, null);
-			}
-
 		});
 
 		const closestZ = cage.scaleZ / 2 + cage.z;
