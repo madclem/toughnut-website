@@ -62,11 +62,9 @@ const setFromRotationMatrix = vectorTarget => {
 	let m11 = te[0],
 		m12 = te[4],
 		m13 = te[8];
-	let m21 = te[1],
-		m22 = te[5],
+	let m22 = te[5],
 		m23 = te[9];
-	let m31 = te[2],
-		m32 = te[6],
+	let m32 = te[6],
 		m33 = te[10];
 
 	vectorTarget[1] = Math.asin(clamp(m13, -1, 1));
@@ -78,6 +76,15 @@ const setFromRotationMatrix = vectorTarget => {
 		vectorTarget[0] = Math.atan2(m32, m22);
 		vectorTarget[2] = 0;
 	}
+};
+
+export const makeRotationFromQuaternion = (quaternion) => {	
+	return compose({
+		x: quaternion[0],
+		y: quaternion[1],
+		z: quaternion[2],
+		w: quaternion[3],
+	});
 };
 
 export const toEuler = (quaternion, vectorTarget) => {

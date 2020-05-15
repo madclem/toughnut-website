@@ -35,12 +35,12 @@ const output =
 		library: '',
 		libraryTarget: 'umd'
 	})) : {
-			filename: 'assets/js/[name].js',
-			path: pathOutput
-		};
+		filename: 'assets/js/[name].js',
+		path: pathOutput
+	};
 
-console.log('isStandalone', isStandalone)
-console.log('output', output)
+console.log('isStandalone', isStandalone);
+console.log('output', output);
 
 const devtool = isProd ? 'source-map' : 'inline-source-map';
 
@@ -59,12 +59,12 @@ const optimization = isProd ? {
 				 compress: {
 						 drop_console: true,
 				 },
-}
+			}
 		}),
 	]
 } : {};
 
-console.log('optimization', optimization)
+console.log('optimization', optimization);
 module.exports = {
 	entry,
 	devtool,
@@ -82,7 +82,13 @@ module.exports = {
 				test: /\.js$/,
 				exclude: /node_modules/,
 				use: {
-					loader: 'babel-loader'
+					loader: 'babel-loader',
+					options: {
+						presets: ['@babel/preset-env',
+							{
+								plugins: ['@babel/plugin-proposal-class-properties']
+							}]
+					}
 				}
 			},
 			{

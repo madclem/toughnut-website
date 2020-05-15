@@ -1,6 +1,6 @@
 export class StateDefault {
-	constructor(scene) {
-		this.scene = scene;
+	constructor() {
+		this.scene = null; // gets set automatically from statesSystem
 	}
 
 	begin() {}

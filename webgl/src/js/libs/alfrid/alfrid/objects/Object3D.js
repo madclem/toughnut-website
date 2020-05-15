@@ -1,8 +1,12 @@
 // Object3D.js
 
-import { vec3, mat4, quat } from 'gl-matrix';
+import { mat4, quat, vec3 } from 'gl-matrix';
+import { makeRotationFromQuaternion } from 'helpers/Quaternion';
+import { setFromRotationMatrix } from 'utils';
+
 import Scheduler from 'scheduling';
 
+const rotQuat = quat.create();
 class Object3D {
 
 	constructor() {
@@ -91,6 +95,13 @@ class Object3D {
 		this._needUpdate = false;
 	}
 
+	setParentMatrix(mParentMatrix) {
+		if (mParentMatrix) {
+			mat4.copy(this._matrixParent, mParentMatrix);
+		} else {
+			mat4.identify(this._matrixParent);
+		}
+	}
 
 	updateMatrix(mParentMatrix) {
 		if(mParentMatrix) {
@@ -109,6 +120,30 @@ class Object3D {
 		quat.copy(this._quat, mQuat);
 		this._needUpdate = true;
 		Scheduler.next(()=>this._update());
+	}
+
+	getRotationXYZ(matrix) {
+		mat4.getRotation(rotQuat, matrix);
+		const rotationMatrix = makeRotationFromQuaternion(rotQuat);
+		return setFromRotationMatrix(rotationMatrix, 'YXZ');
+	}
+
+	setMatrix(matrix) {
+		mat4.identity(this._matrix);
+		mat4.getTranslation(this._position, matrix);
+		this._x = this._position[0];
+		this._y = this._position[1];
+		this._z = this._position[2];
+		mat4.getScaling(this._scale, matrix);
+		this._sx = this._scale[0];
+		this._sy = this._scale[1];
+		this._sz = this._scale[2];
+
+		const rot = this.getRotationXYZ(matrix);		
+		this._rx = rot[0];
+		this._ry = rot[1];
+		this._rz = rot[2];
+		this._needUpdate = true;
 	}
 
 

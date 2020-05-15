@@ -9,8 +9,11 @@ import { PhysicSystem } from './systems/PhysicSystem';
 import Signal from 'mini-signals';
 import { StatesSystem } from './systems/StatesSystem';
 import { TouchSystem } from './systems/TouchSystem';
+import { ControllerSystem } from './systems/ControllerSystem';
 import ViewFxaa from './views/ViewFxaa';
+import { ViewMagicCube } from './views/ViewMagicCube';
 import { ViewNut } from './views/ViewNut';
+import { ViewTextureSwap } from './views/ViewTextureSwap';
 import { ViewNutCage } from './views/ViewNutCage';
 import { onElementAddedToWorld } from './signals';
 
@@ -32,6 +35,7 @@ class SceneApp extends Scene {
 		this.physicSystem = new PhysicSystem();
 		this.statesSystem = new StatesSystem(this);
 		this.touchSystem = new TouchSystem(this, options.container);
+		this.controllerSystem = new ControllerSystem(this, options.container);
 	}
 
 	_initTextures() {
@@ -52,12 +56,15 @@ class SceneApp extends Scene {
 
 
 		// views
+		
+		this._vTextureSwap = new ViewTextureSwap();
+		this._vMagicCube 		= new ViewMagicCube(this);
 		this._vNutCage 		= new ViewNutCage(this);
-		this._vNut 		= new ViewNut(this);
+		this._vNut 		= new ViewNut();
 		this.addToWorld(this._vNutCage);
 		this.addToWorld(this._vNut);
 		this._vFxaa 		= new ViewFxaa();
-
+		
 		// framebuffers
 		const oSettings = { minFilter:GL.LINEAR, magFilter: GL.LINEAR };
 		this.fboRender = new alfrid.FrameBuffer(GL.width, GL.height, oSettings);
@@ -79,34 +86,38 @@ class SceneApp extends Scene {
 		this.physicSystem.update();
 		
 		// 3d scene utils 
-		this._bAxis.draw();
-		this._bDots.draw();
-		// this._bSky.draw(this.skymap);
-		
+		// this._bAxis.draw();
+		// this._bDots.draw();
+		this._vTextureSwap.render(); // keep it outside as it has it's own fbo
 		
 		if (Config.fxaa.active) {
 			this.fboRender.bind();
 			GL.clear(0, 0, 0, 1);
 		}
-
+		
+		this._bSky.draw(this.skymap);
 		
 		this._vNut.render();
 		this._vNutCage.render(this.rad, this.irr);
-
+		this._vMagicCube.render(this._vTextureSwap.texture, this._vTextureSwap);
+		
 		if (Config.fxaa.active) {			
 			this.fboRender.unbind();
 	
-			this._vFxaa.render(this.fboRender.getTexture());
+			this._vFxaa.render(this.fboRender.getTexture(0));
 		}
 
+		// this._vTextureSwap.setAngle(this._vMagicCube.angle);
+		
+		
+		
 
-		// if (Config.debug) {
-    //   GL.disable(GL.DEPTH_TEST);
-    //   const s = 300;      
-    //   GL.viewport(0, 0, s, s);
-    //   this._bCopy.draw(this.passBloom.getTexture());
-    //   GL.enable(GL.DEPTH_TEST);
-    // }
+
+		GL.disable(GL.DEPTH_TEST);
+		const s = 300;      
+		GL.viewport(0, 0, s, s);
+		this._bCopy.draw(this._vTextureSwap.texture);
+		GL.enable(GL.DEPTH_TEST);
 	}
 
 	resize(w, h) {

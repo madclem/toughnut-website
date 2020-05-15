@@ -18,7 +18,7 @@ materials.contacts.cageNut = new CANNON.ContactMaterial(
 	materials.items.nut,
 	{
 		restitution: 0.2,
-		friction: 0.001,
+		friction: 0.01,
 	}
 );
 

@@ -2,5 +2,5 @@
 
 export default {
   debug: false,
-  fxaa: { active: false }
+  fxaa: { active: true }
 }

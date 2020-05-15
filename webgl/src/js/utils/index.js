@@ -15,3 +15,5 @@ export { getDistOptim3D } from './getDistOptim3D';
 export { get2dPos } from './get2dPos';
 export { map } from './map';
 export { intersectionPlane } from './intersectionPlane';
+export { clamp } from './clamp';
+export { setFromRotationMatrix } from './setFromRotationMatrix';

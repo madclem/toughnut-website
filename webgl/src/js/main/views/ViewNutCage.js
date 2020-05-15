@@ -1,11 +1,12 @@
-import alfrid, { GL, View3D } from 'alfrid';
+import alfrid, { GL } from 'alfrid';
 
 import Assets from '../../Assets';
 import CANNON from 'cannon';
+import { Entity3D } from 'helpers';
 import { fitXY } from 'utils';
 import fs from 'shaders/pbr.frag';
 import { materials } from '../physic/materials';
-// import { toEuler } from 'helpers';
+import gsap from 'gsap';
 import vs from 'shaders/pbr.vert';
 
 const definesToString = function (defines) {
@@ -19,7 +20,7 @@ const definesToString = function (defines) {
 	return outStr;
 };
 
-export class ViewNutCage extends View3D {
+export class ViewNutCage extends Entity3D {
 	constructor(scene) {
 		const defines = {
 			USE_TEX_LOD: !!GL.getExtension('EXT_shader_texture_lod') ? 1 : 0,
@@ -132,13 +133,16 @@ export class ViewNutCage extends View3D {
 	/**
    * fadeTo
    */
-	fadeTo(val, snap) {
-		this.animatingAlpha = true;
-
-		if (snap) this.alpha = this.targetAlpha = val;
-		else {
-			this.targetAlpha = val;
+	fadeTo(val, duration = 0.5, ease = 'sine.out') {
+		if (!duration) {
+			this.alpha = val;
+			this._dirty = true;
 		}
+		gsap.to(this, duration, {
+			alpha: val,
+			ease,
+			onUpdate: () => this._dirty = true
+		});
 	}
 
 	/**
@@ -153,9 +157,12 @@ export class ViewNutCage extends View3D {
   
 	setRot(rotX, rotY, rotZ) {		
 		this.body.quaternion.setFromEuler(rotX, rotY || 0, rotZ || 0);
+		// this.rotationX = rotX;
 	}
 
 	render(textureRad, textureIrr) {
+		if (!this.active) return; // this.active comes from View3D
+		
 		this.shader.bind();
 		this.tick++;
 
@@ -190,17 +197,9 @@ export class ViewNutCage extends View3D {
 		textureRad.bind(3);
 		textureIrr.bind(2);
 
-
-		if (this.animatingAlpha) {
-			const addAlpha = (this.targetAlpha - this.alpha) * 0.1;
-			this.alpha += addAlpha;
-
-			if (Math.abs(addAlpha) < 0.01) {
-				this.alpha = this.targetAlpha;
-				this.animatingAlpha = false;
-			}
+		if (this._dirty) {
+			this.shader.uniform('uAlpha', 'uniform1f', this.alpha);
 		}
-		this.shader.uniform('uAlpha', 'uniform1f', this.alpha);
 
 		GL.rotate(this._matrix);
 

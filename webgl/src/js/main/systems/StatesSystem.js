@@ -1,4 +1,4 @@
-import { StateHome, StateProjects } from '../states';
+import { StateHome, StateProjects, StateHomeToProjects, StateProjectsToHome } from '../states';
 
 const NOOP = () =>{};
 
@@ -13,8 +13,13 @@ export class StatesSystem {
     
     this.add('home', new StateHome());
     this.add('projects', new StateProjects());
+    this.add('homeToProjects', new StateHomeToProjects());
+    this.add('projectsToHome', new StateProjectsToHome());
 
-		this.addTransition('home', 'projects', true);	
+		this.addTransition('home', 'homeToProjects');	
+		this.addTransition('homeToProjects', 'projects');	
+		this.addTransition('projects', 'projectsToHome');	
+		this.addTransition('projectsToHome', 'home');	
 	}
 
 	get id() {

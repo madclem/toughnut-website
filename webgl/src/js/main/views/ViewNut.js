@@ -1,14 +1,15 @@
 // ViewCube.js
 
-import alfrid, { GL, View3D } from 'alfrid';
+import alfrid, { GL } from 'alfrid';
 
 import CANNON from 'cannon';
+import { Entity3D } from 'helpers';
 import fs from 'shaders/nut.frag';
 import { getGeometryFaces } from 'utils';
 import { materials } from '../physic/materials';
 import vs from 'shaders/nut.vert';
 
-export class ViewNut extends View3D {
+export class ViewNut extends Entity3D {
   constructor() {
 		super(vs, fs);
 
@@ -36,6 +37,7 @@ export class ViewNut extends View3D {
 	}
 
 	render() {
+		if (!this.active) return;
 		this.shader.bind();
 
 		GL.rotate(this._matrix);

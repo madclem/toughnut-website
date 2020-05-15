@@ -177,7 +177,7 @@ float microfacetDistribution(PBRInfo pbrInputs)
 void main() {
 
 	float perceptualRoughness   = uRoughness;
-	float metallic              = 0.0;
+	float metallic              = 1.0;
 	perceptualRoughness         = clamp(perceptualRoughness, c_MinRoughness, 1.0);
 	metallic                    = clamp(metallic, 0.0, 1.0);
 	float alphaRoughness        = perceptualRoughness * perceptualRoughness;
