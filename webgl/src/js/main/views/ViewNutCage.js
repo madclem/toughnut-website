@@ -5,8 +5,8 @@ import CANNON from 'cannon';
 import { Entity3D } from 'helpers';
 import { fitXY } from 'utils';
 import fs from 'shaders/pbr.frag';
-import { materials } from '../physic/materials';
 import gsap from 'gsap';
+import { materials } from '../physic/materials';
 import vs from 'shaders/pbr.vert';
 
 const definesToString = function (defines) {
@@ -57,8 +57,8 @@ export class ViewNutCage extends Entity3D {
     
 		this.shader.bind();
 
-		this.shader.uniform('uBaseColor', 'uniform3fv', [1, 0, 1]);
-		this.shader.uniform('uRoughness', 'uniform1f', .0);
+		this.shader.uniform('uBaseColor', 'uniform3fv', [1, 1, 1]);
+		this.shader.uniform('uRoughness', 'uniform1f', .2);
 		this.shader.uniform('uMetallic', 'uniform1f', .5);
 		this.shader.uniform('uSpecular', 'uniform1f', .5);
 

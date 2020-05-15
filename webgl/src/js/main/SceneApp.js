@@ -3,18 +3,18 @@ import { createContainer, resize } from 'utils';
 
 import Assets from '../Assets';
 import Config from './Config';
+import { ControllerSystem } from './systems/ControllerSystem';
 // SceneApp.js
 import { OrbitalControlTween } from 'helpers';
 import { PhysicSystem } from './systems/PhysicSystem';
 import Signal from 'mini-signals';
 import { StatesSystem } from './systems/StatesSystem';
 import { TouchSystem } from './systems/TouchSystem';
-import { ControllerSystem } from './systems/ControllerSystem';
 import ViewFxaa from './views/ViewFxaa';
 import { ViewMagicCube } from './views/ViewMagicCube';
 import { ViewNut } from './views/ViewNut';
-import { ViewTextureSwap } from './views/ViewTextureSwap';
 import { ViewNutCage } from './views/ViewNutCage';
+import { ViewTextureSwap } from './views/ViewTextureSwap';
 import { onElementAddedToWorld } from './signals';
 
 class SceneApp extends Scene {
@@ -41,7 +41,7 @@ class SceneApp extends Scene {
 	_initTextures() {
 		this.rad = Assets.get('studio_radiance');
 		this.irr = Assets.get('irr');
-		this.skymap = Assets.get('gradient');
+		this.skymap = Assets.get('gradient-white');
 	}
 
 	_initViews() {
@@ -113,11 +113,11 @@ class SceneApp extends Scene {
 		
 
 
-		GL.disable(GL.DEPTH_TEST);
-		const s = 300;      
-		GL.viewport(0, 0, s, s);
-		this._bCopy.draw(this._vTextureSwap.texture);
-		GL.enable(GL.DEPTH_TEST);
+		// GL.disable(GL.DEPTH_TEST);
+		// const s = 300;      
+		// GL.viewport(0, 0, s, s);
+		// this._bCopy.draw(this._vTextureSwap.texture);
+		// GL.enable(GL.DEPTH_TEST);
 	}
 
 	resize(w, h) {

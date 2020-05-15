@@ -1,6 +1,7 @@
 
 const assetsToLoad = [
 	{"id":"brdfLUT","url":"assets/img/brdfLUT.png","type":"png"},
+	{"id":"gradient-white","url":"assets/img/gradient-white.jpg","type":"jpg"},
 	{"id":"gradient","url":"assets/img/gradient.jpg","type":"jpg"},
 	{"id":"irr_negx","url":"assets/img/irr_negx.hdr","type":"binary"},
 	{"id":"irr_negy","url":"assets/img/irr_negy.hdr","type":"binary"},

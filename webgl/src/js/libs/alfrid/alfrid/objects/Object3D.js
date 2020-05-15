@@ -1,10 +1,10 @@
 // Object3D.js
 
 import { mat4, quat, vec3 } from 'gl-matrix';
-import { makeRotationFromQuaternion } from 'helpers/Quaternion';
-import { setFromRotationMatrix } from 'utils';
 
 import Scheduler from 'scheduling';
+import { makeRotationFromQuaternion } from 'helpers/Quaternion';
+import { setFromRotationMatrix } from 'utils';
 
 const rotQuat = quat.create();
 class Object3D {
@@ -122,13 +122,13 @@ class Object3D {
 		Scheduler.next(()=>this._update());
 	}
 
-	getRotationXYZ(matrix) {
+	getRotationEuler(matrix, order="XYZ") {
 		mat4.getRotation(rotQuat, matrix);
 		const rotationMatrix = makeRotationFromQuaternion(rotQuat);
-		return setFromRotationMatrix(rotationMatrix, 'YXZ');
+		return setFromRotationMatrix(rotationMatrix, order);
 	}
 
-	setMatrix(matrix) {
+	setMatrix(matrix, orderRot="XYZ") {
 		mat4.identity(this._matrix);
 		mat4.getTranslation(this._position, matrix);
 		this._x = this._position[0];
@@ -139,7 +139,7 @@ class Object3D {
 		this._sy = this._scale[1];
 		this._sz = this._scale[2];
 
-		const rot = this.getRotationXYZ(matrix);		
+		const rot = this.getRotationEuler(matrix, orderRot);		
 		this._rx = rot[0];
 		this._ry = rot[1];
 		this._rz = rot[2];

@@ -22,15 +22,17 @@ export class StateHomeToProjects extends StateDefault {
 		magicCube.toggleMatrixMatching(true, cage._matrix); // make the cube matrix dependant to the cage
 		
 		cage.fadeTo(0.6, 0.2);
-
-		const o = { rotX: cage.rotationX,  scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
+		// magicCube.rotationX = -Math.PI / 2;
+		const o = { rotX: 0,  scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
 		const nRot = 0.5;
 		gsap.to(o, 1.6, {
-			rotX: o.rotX + Math.PI * 2 * nRot,
+			rotX: o.rotX + Math.floor(Math.PI * 2 * 100) / 100 * nRot,
 			ease: Back.easeOut.config(1.25),
 			onUpdate: () => {
+				console.log('cage rot', cage.rotationX);
+				magicCube.rotationX = -Math.PI;
+				magicCube.extraAngle = o.rotX;
 				cage.setRot(o.rotX);
-				// magicCube.rotationX = -Math.PI / 2;
 			},
 			onComplete: () => {
 				magicCube.saveMatrix();
@@ -61,7 +63,7 @@ export class StateHomeToProjects extends StateDefault {
 		});
 
 		closestZ = cage.getZForScale(scaleZ) + scaleZ / 2;
-		const dist = getCameraDistanceFitX(window.innerWidth  / 2.6, scaleX, closestZ, this.scene.camera, this.scene.orbitalControl);
+		const dist = getCameraDistanceFitX(window.innerWidth  / 2, scaleX, closestZ, this.scene.camera, this.scene.orbitalControl);
 		
 		OrbitalControlTween.tween({
 			radius: dist,

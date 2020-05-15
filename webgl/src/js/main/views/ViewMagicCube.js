@@ -13,6 +13,7 @@ export class ViewMagicCube extends Entity3D {
 		super(vs, fs);
 		this.scene = scene;
 
+		this.extraAngle = 0;
 		this.tempMat4 = mat4.create();
     
 		this.isMatching = false;
@@ -20,6 +21,7 @@ export class ViewMagicCube extends Entity3D {
 		this.tick = 0;
 		this.mtx = mat4.create();
 		this.angle = 0;
+		this.lastAngle = 0;
 		this.lastFace = 9999999;
 		this.angleTarget = 0;
     
@@ -73,6 +75,7 @@ export class ViewMagicCube extends Entity3D {
 	}
 	
 	setAngle(val) {
+		this.extraAngle = 0;
 		this.angleTarget = this.angle = this.rotationX = val;
 	}
   
@@ -91,15 +94,15 @@ export class ViewMagicCube extends Entity3D {
 		this.reset();
 	}
 
-	getRX(matrix) {
-		const rot = this.getRotationXYZ(matrix);
+	getRX(matrix, order="XYZ") {
+		const rot = this.getRotationEuler(matrix, order);
 
 		return rot[0];
 	}
 
 	saveMatrix(mat) {
 		this.setMatrix(mat || this.tempMat4);
-		this.angle = this.angleTarget = this.rotationX = 0;
+		this.setAngle(this.lastAngle);
 		this._update();
 	}
 
@@ -131,12 +134,9 @@ export class ViewMagicCube extends Entity3D {
 		this.shader.uniform('uScaleNoise', 'float', this.scaleNoise);
 		GL.draw(this.mesh);
 
-		const angleMatMatch = this.matrixToMatch ? this.getRX(this.matrixToMatch) : null;
-		const angleMatrix = this.getRX(this._matrix);
-		const angleTempMat4 = this.getRX(this.tempMat4);
-		const angle = (this.isMatching && this.matrixToMatch) ? this.getRX(this.tempMat4) : this.rotationX;
-		console.log(angle)
+		const angle = this.rotationX + this.extraAngle;// + angleMatMatch / (Math.PI * 2);
 		const currentFace = Math.round(angle / (Math.PI / 2));
+
 		if (currentFace !== this.lastFace) {
 			vTextureSwap.swap(currentFace);
 		}
@@ -146,5 +146,7 @@ export class ViewMagicCube extends Entity3D {
 			vTextureSwap.showBottom();
 		}
 		this.lastFace = currentFace;
+
+		this.lastAngle = angle;
 	}
 }

@@ -63,7 +63,7 @@ struct PBRInfo
 
 
 const float M_PI = 3.141592653589793;
-const float c_MinRoughness = 0.04;
+const float c_MinRoughness = 0.004;
 const vec3 lightDir = vec3(0.5);
 const vec3 lightColor = vec3(1.);
 
@@ -177,7 +177,7 @@ float microfacetDistribution(PBRInfo pbrInputs)
 void main() {
 
 	float perceptualRoughness   = uRoughness;
-	float metallic              = 1.0;
+	float metallic              = .2;
 	perceptualRoughness         = clamp(perceptualRoughness, c_MinRoughness, 1.0);
 	metallic                    = clamp(metallic, 0.0, 1.0);
 	float alphaRoughness        = perceptualRoughness * perceptualRoughness;
