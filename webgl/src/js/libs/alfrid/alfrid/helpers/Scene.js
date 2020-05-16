@@ -109,7 +109,7 @@ class Scene {
 		this.cameraOrtho            = new CameraOrtho();
 	}
 
-	_loop() {
+	_loop(deltaTime) {
 
 		//	RESET VIEWPORT
 		GL.viewport(0, 0, GL.width, GL.height);

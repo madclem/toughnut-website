@@ -155,7 +155,7 @@ export class ViewNutCage extends Entity3D {
 		this.changeOffsets(scaleX / 2, scaleY / 2, scaleY * ratioHeight);
 	}
   
-	setRot(rotX, rotY, rotZ) {		
+	setRot(rotX, rotY, rotZ) {
 		this.body.quaternion.setFromEuler(rotX, rotY || 0, rotZ || 0);
 		// this.rotationX = rotX;
 	}

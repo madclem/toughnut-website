@@ -18,10 +18,19 @@ export class StateProjectsToHome extends StateDefault {
 		
 		cage.start();
 		nut.start();
+
 		
 		mat4.identity(tempMat4);
 		magicCube.saveMatrix(tempMat4);
 		const originalRotX = magicCube.rotationX; // remeber that rotation
+		
+		const initValue = cage.rotationX;
+		const extra = -(originalRotX % (Math.PI));
+		const o = { rotX: initValue - extra, scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
+		cage.setRot(o.rotX);
+		cage.updateRotation();
+
+
 		magicCube.toggleMatrixMatching(true, cage._matrix);
 		// setTimeout(()=>{
 
@@ -31,7 +40,7 @@ export class StateProjectsToHome extends StateDefault {
 		// }, 10)
 		
 		// return;
-		const duration = 2.6;
+		const duration = 1.4;
 		const ease = 'sine.inout';
 		
 
@@ -40,18 +49,16 @@ export class StateProjectsToHome extends StateDefault {
 		const h = window.innerHeight;
 
 
-		const initValue = cage.rotationX;
-		const extra = -(originalRotX % (Math.PI / 2));
-		const o = { rotX: initValue - extra, scaleX: cage.scaleX, scaleY: cage.scaleY, scaleZ: cage.scaleZ };
-		cage.setRot(o.rotX);
-		cage.updateRotation();
-		magicCube.rotationX = originalRotX + extra;
+		
+		// magicCube.rotationX = originalRotX + extra;
+		magicCube.needUpdate = true;
 		magicCube._update();
 
 		// cage.fadeTo(0, 0.2, 'sine.in');
 		// return;
 		// const originalRotX = magicCube.rotationX;
 		const nRot = 0.5;
+		console.log('initValue, o.rotX - Math.PI * 2 * nRot + extra', initValue, o.rotX - Math.PI * 2 * nRot + extra)
 		gsap.to(o, duration, {
 			rotX: o.rotX - Math.PI * 2 * nRot + extra, // + originalRotX % Math.PI,
 			ease,
@@ -59,7 +66,10 @@ export class StateProjectsToHome extends StateDefault {
 			onUpdate: () => {
 				cage.setRot(o.rotX);
 				magicCube.rotationX = originalRotX + extra;
-				magicCube.extraAngle = initValue - o.rotX - extra;
+				// console.log(initValue - o.rotX);
+				
+				magicCube.extraAngle =  o.rotX;
+				// magicCube.extraAngle = initValue - o.rotX - extra;
 			},
 			onComplete: () => {
 				magicCube.saveMatrix();
