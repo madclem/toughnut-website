@@ -1,11 +1,12 @@
 import { GL, Ray } from 'alfrid';
-import { getMouse, intersectionPlane, intersectionRayMesh } from 'utils';
+import { getMouse, intersectionRayMesh } from 'utils';
 import { vec2, vec3 } from 'gl-matrix';
 
 import CANNON from 'cannon';
 
 export class TouchSystem {
 	constructor(scene, targetListener) {
+		this.listeners = { onDown: null, onMove: null, onUp: null };
 		this.targetListener = targetListener;	
 		this.scene = scene; 
 		this.isMouseDown = false;
@@ -27,7 +28,7 @@ export class TouchSystem {
 		this._onDown = this.onDown.bind(this);
 		this._onMove = this.onMove.bind(this);
 		this._onUp = this.onUp.bind(this);
-	}	
+	}
   
   setTargets(targets) {
     this.targets = targets;
@@ -66,46 +67,24 @@ export class TouchSystem {
 
       const hit = intersectionRayMesh(this.ray, target.mesh.vertices, target._matrix);
 
-      if(hit) {
-        this.addMouseConstraint(hit[0], hit[1], hit[2], target.bodies[0], target);
-
+      if(hit && this.listeners.onDown) {
+				this.listeners.onDown(hit, target.bodies[0], target);
         return;
       }
     }
 	}
 
+	removeListeners() {
+		this.listeners = { onDown: null, onMove: null, onUp: null };
+	}
+
 	onMove(e) {
-		if (this.mouseConstraint && this.target) {
-			this.generateRay(e);
-
-			const origin = this.ray.origin;
-			const target = this.ray.at(this.scene.orbitalControl.radius.value);
-
-			const z = this.target.z;
-			const intersection = intersectionPlane(origin, target, this.pointOnPlane, [0, 0, z], [1, 1, z], [0, -1, z]);
-      
-			this.jointBody.position.set(intersection[0], intersection[1], intersection[2]);
-			this.mouseConstraint.update();
-		}
+		this.generateRay(e);
+		if (this.listeners.onMove) this.listeners.onMove(e);
 	}
 
 	onUp() {
-		this.scene.physicSystem.world.removeConstraint(this.mouseConstraint);
-		this.mouseConstraint = false;
-		this.target = null;
-	}
-
-	addMouseConstraint(x, y, z, body, target) {
-    this.target = target;
-		const constrainedBody = body;
-
-		// view-source:https://schteppe.github.io/cannon.js/examples/threejs_mousepick.html
-		const v1 = new CANNON.Vec3(x, y, z).vsub(constrainedBody.position);
-		const antiRot = constrainedBody.quaternion.inverse();
-		const pivot = antiRot.vmult(v1);
-		this.jointBody.position.set(x, y, z);
-		this.mouseConstraint = new CANNON.PointToPointConstraint(constrainedBody, pivot, this.jointBody, new CANNON.Vec3(0, 0, 0));
-		this.scene.physicSystem.world.addConstraint(this.mouseConstraint);
+		if (this.listeners.onUp) this.listeners.onUp();
 	}
 
 	start() {

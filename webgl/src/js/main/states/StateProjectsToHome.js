@@ -112,11 +112,4 @@ export class StateProjectsToHome extends StateDefault {
 
 		cage.fadeTo(0, duration, 'sine.in');
 	}
-
-	
-	end({ to }) {
-	}
-
-	render() {
-	}
 }

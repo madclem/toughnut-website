@@ -1,7 +1,8 @@
 import { VerletLink } from './VerletLink';
 
-export class VerletDot {
+export class VerletPoint {
 	constructor(x, y, z) {
+		this.boundaries = null;
 		this.vel = vec3.create();
 		this.pos = vec3.fromValues(x, y, z);
 		this.lastPos = vec3.fromValues(x, y, z);
@@ -12,6 +13,8 @@ export class VerletDot {
 		this.radius = 0.05;
 		this.friction = 0.97;
 		this.groundFriction = 0.7 / 60;
+
+		this.onFloor = false;
 	}
 
 	update() {
@@ -21,8 +24,9 @@ export class VerletDot {
 		vec3.scale(this.vel, this.vel, this.friction);
     
     // if the point touches the ground set groundFriction
-    const sqrtLen = vec3.squaredLength(this.vel);
-		if (this.pos[1] <= -0.5 - this.radius && sqrtLen > 0.000001) {
+		const sqrtLen = vec3.squaredLength(this.vel);
+		
+		if (this.boundaries && this.onFloor && sqrtLen > 0.000001) {
 			const m = vec3.length(this.vel);
 			this.vel[0] /= m;
 			this.vel[1] /= m;
@@ -38,22 +42,48 @@ export class VerletDot {
 	pin(val) {
 		this.pinned = val;
 	}
+
+	updateBounds(minX, maxX, minY, maxY, minZ, maxZ) {
+		this.boundaries = {};
+		this.boundaries.minX = minX;
+		this.boundaries.minY = minY;
+		this.boundaries.minZ = minZ;
+
+		this.boundaries.maxX = maxX;
+		this.boundaries.maxY = maxY;
+		this.boundaries.maxZ = maxZ;
+	}
   
 	constrain() {
 		// TODO: CHECK IF BOUNDARIES
-		// if (this.boundaries)
-		// if (this.pos.x > CANVAS_WIDTH - this.radius) {
-		//   this.pos.x = CANVAS_WIDTH - this.radius;
-		// }
-		// if (this.pos.x < this.radius) {
-		//   this.pos.x = this.radius;
-		// }
-		if (this.pos[1] < -0.5 - this.radius) {
-		  this.pos[1] = -0.5 - this.radius;
+		if (this.boundaries) {
+			this.onFloor = false;
+
+			if (this.pos[0] > this.boundaries.maxX - this.radius) {
+			  this.pos[0] = this.boundaries.maxX - this.radius;
+			}
+			else if (this.pos[0] < this.boundaries.minX + this.radius) {
+			  this.pos[0] = this.boundaries.minX + this.radius;
+			}
+
+			if (this.pos[1] > this.boundaries.maxY - this.radius) {
+				this.pos[1] = this.boundaries.maxY - this.radius;
+			}
+			else if (this.pos[1] < this.boundaries.minY + this.radius) {
+				this.pos[1] = this.boundaries.minY + this.radius;
+				this.onFloor = true;
+			}
+
+			if (this.pos[2] > this.boundaries.maxZ - this.radius) {
+			  this.pos[2] = this.boundaries.maxZ - this.radius;
+			}
+			else if (this.pos[2] < this.boundaries.minZ + this.radius) {
+			  this.pos[2] = this.boundaries.minZ + this.radius;
+			}
+			// if (this.pos.y < this.radius) {
+			//   this.pos.y = this.radius;
+			// }
 		}
-		// if (this.pos.y < this.radius) {
-		//   this.pos.y = this.radius;
-		// }
 	}
 
 	// resetLinks() {

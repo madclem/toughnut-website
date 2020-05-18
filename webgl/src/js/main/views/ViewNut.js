@@ -22,8 +22,8 @@ export class ViewNut extends Entity3D {
 		const body = new CANNON.Body({
 			mass: 200,
       type: CANNON.Body.DYNAMIC,
-      material: materials.items.nut
-			// angularDamping: 0,
+      material: materials.items.nut,
+			angularDamping: 0.9,
 			// collisionFilterGroup: GROUPS.gameObjects,
 			// collisionFilterMask: GROUPS.player,
 		});

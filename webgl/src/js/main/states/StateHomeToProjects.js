@@ -82,11 +82,4 @@ export class StateHomeToProjects extends StateDefault {
 			}
 		});
 	}
-
-	
-	end({ to }) {
-	}
-
-	render() {
-	}
 }

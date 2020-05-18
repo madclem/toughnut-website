@@ -36,8 +36,6 @@ const intersectionRayMesh = (ray, vertices, matrix, getClosest = false) => {
 		}
 
 		hit = ray.intersectTriangle(v0, v1, v2, false);
-
-    console.log('here');
 		
 		if(hit) {
 			if (getClosest) {

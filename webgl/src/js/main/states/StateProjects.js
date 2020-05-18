@@ -1,11 +1,11 @@
 import { GL, Scheduler } from 'alfrid';
 import { fitXY, getCameraDistanceFitX } from 'utils';
 import gsap, { Back } from 'gsap';
+import { onKeyDown, onKeyUp } from '../signals';
 
 import { OrbitalControlTween } from 'helpers';
 import { StateDefault } from './StateDefault';
 import { mat4 } from 'gl-matrix';
-import { onKeyUp, onKeyDown } from '../signals';
 
 const tempMatrix = mat4.create();
 export class StateProjects extends StateDefault {
@@ -31,8 +31,5 @@ export class StateProjects extends StateDefault {
 	end({ to }) {
 		this.keyDownB.detach();
 		this.keyUpB.detach();
-	}
-
-	render() {
 	}
 }

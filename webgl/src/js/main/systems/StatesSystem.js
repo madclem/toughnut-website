@@ -1,4 +1,4 @@
-import { StateHome, StateProjects, StateHomeToProjects, StateProjectsToHome } from '../states';
+import { StateHome, StateHomeToProjects, StateProjects, StateProjectsToHome } from '../states';
 
 const NOOP = () =>{};
 
@@ -65,7 +65,7 @@ export class StatesSystem {
 		}
 	}
 
-	render() {
-		this.states[this.currentStateId].render();
+	update() {
+		this.states[this.currentStateId].update();
 	}
 }
