@@ -21,6 +21,7 @@
     "@babel/preset-env": "^7.9.6",
     "babel-loader": "^8.0.6",
     "css-loader": "^2.1.1",
+    "debug-camera": "github:yiwenl/debug-camera",
     "file-loader": "^6.0.0",
     "fs-extra": "^8.1.0",
     "glslify": "^7.0.0",

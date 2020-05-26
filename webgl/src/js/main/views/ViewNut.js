@@ -14,7 +14,7 @@ export class ViewNut extends Entity3D {
 		super(vs, fs);
 
 		const size = 0.2;
-		this.mesh = alfrid.Geom.cube(size, size, size);
+		this.mesh = alfrid.Geom.cube(size, size, size * 10.);
 
 		if (this.mesh.faces.length === 0) this.mesh._faces = getGeometryFaces(this.mesh);
 		this.faces = this.mesh.faces;

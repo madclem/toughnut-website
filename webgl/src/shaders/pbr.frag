@@ -10,6 +10,7 @@ uniform samplerCube uRadianceMap;
 uniform samplerCube uIrradianceMap;
 uniform float uAlpha;
 uniform float uRoughness;
+uniform sampler2D uTextureReflection;
 
 #ifdef HAS_BASECOLORMAP
 uniform sampler2D uColorMap;
@@ -38,6 +39,7 @@ uniform vec3 uCameraPos;
 varying vec2 vTextureCoord;
 varying vec3 vNormal;
 varying vec3 vPosition;
+varying vec4 vClipSpace;
 
 //	From GLTF WebGL PBR :
 //	https://github.com/KhronosGroup/glTF-WebGL-PBR
@@ -143,6 +145,14 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 	return diffuse + specular;
 }
 
+float near = 0.1; 
+float far  = 100.0; 
+  
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));	
+}
 
 vec3 diffuse(PBRInfo pbrInputs)
 {
@@ -266,10 +276,18 @@ void main() {
 	color               = mix(color, baseColor.rgb, scaleDiffBaseMR.y);
 	color               = mix(color, vec3(metallic), scaleDiffBaseMR.z);
 	color               = mix(color, vec3(perceptualRoughness), scaleDiffBaseMR.w);
+
+	vec2 uvInversed = vec2(1. - vTextureCoord.x, 1. - vTextureCoord.y);
+	// vec2 uvInversed = vec2(vTextureCoord.x, vTextureCoord.y);
+	float depth = 1. - LinearizeDepth(texture2D(uTextureReflection, uvInversed).r) / far;
+	float zTextDepth = 1. - texture2D(uTextureReflection, vTextureCoord).r;
 	
+	// if (gl_FragCoord.z > zTextDepth) discard;
 	// output the fragment color
 	vec3 fColor = pow(color,vec3(1.0/2.2));
-	gl_FragColor        = vec4(fColor, baseColor.a * uAlpha);
+	// gl_FragColor        = vec4(fColor, baseColor.a * uAlpha);
+	gl_FragColor        = vec4(vec3(depth), 1.);
+	// gl_FragColor        = vec4(reflectColor, baseColor.a * uAlpha);
 	// gl_FragColor        = vec4(, baseColor.a);
 
 }

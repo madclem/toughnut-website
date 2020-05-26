@@ -165,7 +165,7 @@ export class ViewNutCage extends Entity3D {
 		this.setRotationFromQuaternion([x, y, z, w]);
 	}
 
-	render(textureRad, textureIrr) {
+	render(textureRad, textureIrr, textureReflection) {
 		if (!this.active) return; // this.active comes from View3D
 		
 		this.shader.bind();
@@ -198,9 +198,11 @@ export class ViewNutCage extends Entity3D {
 		
 		this.shader.uniform('uRadianceMap', 'uniform1i', 3);
 		this.shader.uniform('uIrradianceMap', 'uniform1i', 2);
-		
 		textureRad.bind(3);
 		textureIrr.bind(2);
+
+		this.shader.uniform('uTextureReflection', 'uniform1i', 4);
+		textureReflection.bind(4);
 
 		if (this._dirty) {
 			this.shader.uniform('uAlpha', 'uniform1f', this.alpha);

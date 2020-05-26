@@ -15,6 +15,7 @@ uniform mat3 uModelViewMatrixInverse;
 varying vec2 vTextureCoord;
 varying vec3 vNormal;
 varying vec3 vPosition;
+varying vec4 vClipSpace;
 
 
 float exponentialIn(float t) {
@@ -31,5 +32,7 @@ void main(void) {
 	vNormal       = normalize(vec3(uModelMatrix * vec4(mix(aNormal, smoothNormal, percentageSmooth), 0.0)));
 	vTextureCoord = aTextureCoord;
 
+	vClipSpace = uProjectionMatrix * uViewMatrix * position;
+	
 	gl_Position   = uProjectionMatrix * uViewMatrix * position;
 }
