@@ -1,16 +1,16 @@
 #define SHADER_NAME pbr_frag
 
-#extension GL_EXT_shader_texture_lod: enable
-#extension GL_OES_standard_derivatives : enable
+#extension GL_EXT_shader_texture_lod:enable
+#extension GL_OES_standard_derivatives:enable
 
 precision highp float;
 
-uniform sampler2D 	uBRDFMap;
+uniform sampler2D uBRDFMap;
 uniform samplerCube uRadianceMap;
 uniform samplerCube uIrradianceMap;
 uniform float uAlpha;
 uniform float uRoughness;
-uniform sampler2D uTextureReflection;
+uniform sampler2D uTextureDepth;
 
 #ifdef HAS_BASECOLORMAP
 uniform sampler2D uColorMap;
@@ -30,8 +30,6 @@ uniform sampler2D uEmissiveMap;
 uniform vec3 uEmissiveFactor;
 #endif
 
-
-
 uniform sampler2D uRoughnessMap;
 
 uniform vec3 uCameraPos;
@@ -49,182 +47,174 @@ varying vec4 vClipSpace;
 // of the shading terms, outlined in the Readme.MD Appendix.
 struct PBRInfo
 {
-	float NdotL;                  // cos angle between normal and light direction
-	float NdotV;                  // cos angle between normal and view direction
-	float NdotH;                  // cos angle between normal and half vector
-	float LdotH;                  // cos angle between light direction and half vector
-	float VdotH;                  // cos angle between view direction and half vector
-	float perceptualRoughness;    // roughness value, as authored by the model creator (input to shader)
-	float metalness;              // metallic value at the surface
-	vec3 reflectance0;            // full reflectance color (normal incidence angle)
-	vec3 reflectance90;           // reflectance color at grazing angle
-	float alphaRoughness;         // roughness mapped to a more linear change in the roughness (proposed by [2])
-	vec3 diffuseColor;            // color contribution from diffuse lighting
-	vec3 specularColor;           // color contribution from specular lighting
+	float NdotL;// cos angle between normal and light direction
+	float NdotV;// cos angle between normal and view direction
+	float NdotH;// cos angle between normal and half vector
+	float LdotH;// cos angle between light direction and half vector
+	float VdotH;// cos angle between view direction and half vector
+	float perceptualRoughness;// roughness value, as authored by the model creator (input to shader)
+	float metalness;// metallic value at the surface
+	vec3 reflectance0;// full reflectance color (normal incidence angle)
+	vec3 reflectance90;// reflectance color at grazing angle
+	float alphaRoughness;// roughness mapped to a more linear change in the roughness (proposed by [2])
+	vec3 diffuseColor;// color contribution from diffuse lighting
+	vec3 specularColor;// color contribution from specular lighting
 };
 
+const float M_PI=3.141592653589793;
+const float c_MinRoughness=.004;
+const vec3 lightDir=vec3(.5);
+const vec3 lightColor=vec3(1.);
 
-const float M_PI = 3.141592653589793;
-const float c_MinRoughness = 0.004;
-const vec3 lightDir = vec3(0.5);
-const vec3 lightColor = vec3(1.);
-
-const vec4 scaleDiffBaseMR = vec4(0.);
-const vec4 scaleFGDSpec = vec4(0.);
-const vec4 scaleIBLAmbient = vec4(1.);
-const float uOcclusionStrength = 1.;
-const vec3 baseColor = vec3(1.);
-
-
+const vec4 scaleDiffBaseMR=vec4(0.);
+const vec4 scaleFGDSpec=vec4(0.);
+const vec4 scaleIBLAmbient=vec4(1.);
+const float uOcclusionStrength=1.;
+const vec3 baseColor=vec3(1.);
 
 vec4 SRGBtoLINEAR(vec4 srgbIn)
 {
 	#ifdef MANUAL_SRGB
 	#ifdef SRGB_FAST_APPROXIMATION
-	vec3 linOut = pow(srgbIn.xyz,vec3(2.2));
-	#else //SRGB_FAST_APPROXIMATION
-	vec3 bLess = step(vec3(0.04045),srgbIn.xyz);
-	vec3 linOut = mix( srgbIn.xyz/vec3(12.92), pow((srgbIn.xyz+vec3(0.055))/vec3(1.055),vec3(2.4)), bLess );
-	#endif //SRGB_FAST_APPROXIMATION
+	vec3 linOut=pow(srgbIn.xyz,vec3(2.2));
+	#else//SRGB_FAST_APPROXIMATION
+	vec3 bLess=step(vec3(.04045),srgbIn.xyz);
+	vec3 linOut=mix(srgbIn.xyz/vec3(12.92),pow((srgbIn.xyz+vec3(.055))/vec3(1.055),vec3(2.4)),bLess);
+	#endif//SRGB_FAST_APPROXIMATION
 	return vec4(linOut,srgbIn.w);;
-	#else //MANUAL_SRGB
+	#else//MANUAL_SRGB
 	return srgbIn;
-	#endif //MANUAL_SRGB
+	#endif//MANUAL_SRGB
 }
 
-
-vec3 getNormal() {
-	vec3 pos_dx = dFdx(vPosition);
-	vec3 pos_dy = dFdy(vPosition);
-	vec3 tex_dx = dFdx(vec3(vTextureCoord, 0.0));
-	vec3 tex_dy = dFdy(vec3(vTextureCoord, 0.0));
-	vec3 t = (tex_dy.t * pos_dx - tex_dx.t * pos_dy) / (tex_dx.s * tex_dy.t - tex_dy.s * tex_dx.t);
-
-	vec3 ng = normalize(vNormal);
-
-	t = normalize(t - ng * dot(ng, t));
-	vec3 b = normalize(cross(ng, t));
-	mat3 tbn = mat3(t, b, ng);
-
-#ifdef HAS_NORMALMAP
-	vec3 n = texture2D(uNormalMap, vTextureCoord).rgb;
-	n = normalize(tbn * ((2.0 * n - 1.0) * vec3(uNormalScale, uNormalScale, 1.0)));
-#else
+vec3 getNormal(){
+	vec3 pos_dx=dFdx(vPosition);
+	vec3 pos_dy=dFdy(vPosition);
+	vec3 tex_dx=dFdx(vec3(vTextureCoord,0.));
+	vec3 tex_dy=dFdy(vec3(vTextureCoord,0.));
+	vec3 t=(tex_dy.t*pos_dx-tex_dx.t*pos_dy)/(tex_dx.s*tex_dy.t-tex_dy.s*tex_dx.t);
+	
+	vec3 ng=normalize(vNormal);
+	
+	t=normalize(t-ng*dot(ng,t));
+	vec3 b=normalize(cross(ng,t));
+	mat3 tbn=mat3(t,b,ng);
+	
+	#ifdef HAS_NORMALMAP
+	vec3 n=texture2D(uNormalMap,vTextureCoord).rgb;
+	n=normalize(tbn*((2.*n-1.)*vec3(uNormalScale,uNormalScale,1.)));
+	#else
 	// The tbn matrix is linearly interpolated, so we need to re-normalize
-	vec3 n = normalize(tbn[2].xyz);
-#endif
-
+	vec3 n=normalize(tbn[2].xyz);
+	#endif
+	
 	return n;
 }
 
-
-vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
+vec3 getIBLContribution(PBRInfo pbrInputs,vec3 n,vec3 reflection)
 {
-	float mipCount = 7.0; // resolution of 512x512
-	float lod = (pbrInputs.perceptualRoughness * mipCount);
+	float mipCount=7.;// resolution of 512x512
+	float lod=(pbrInputs.perceptualRoughness*mipCount);
 	// retrieve a scale and bias to F0. See [1], Figure 3
-	vec3 brdf = SRGBtoLINEAR(texture2D(uBRDFMap, vec2(pbrInputs.NdotV, 1.0 - pbrInputs.perceptualRoughness))).rgb;
-	vec3 diffuseLight = SRGBtoLINEAR(textureCube(uIrradianceMap, n)).rgb;
-
+	vec3 brdf=SRGBtoLINEAR(texture2D(uBRDFMap,vec2(pbrInputs.NdotV,1.-pbrInputs.perceptualRoughness))).rgb;
+	vec3 diffuseLight=SRGBtoLINEAR(textureCube(uIrradianceMap,n)).rgb;
 	
 	#ifdef USE_TEX_LOD
-		vec3 specularLight = SRGBtoLINEAR(textureCubeLodEXT(uRadianceMap, reflection, lod)).rgb;
-	    // vec3 specularLight = SRGBtoLINEAR(textureCubeLodEXT(u_SpecularEnvSampler, reflection, lod)).rgb;
+	vec3 specularLight=SRGBtoLINEAR(textureCubeLodEXT(uRadianceMap,reflection,lod)).rgb;
+	// vec3 specularLight = SRGBtoLINEAR(textureCubeLodEXT(u_SpecularEnvSampler, reflection, lod)).rgb;
 	#else
-		vec3 specularLight = SRGBtoLINEAR(textureCube(uRadianceMap, reflection)).rgb;
-	    // vec3 specularLight = SRGBtoLINEAR(textureCube(u_SpecularEnvSampler, reflection)).rgb;
+	vec3 specularLight=SRGBtoLINEAR(textureCube(uRadianceMap,reflection)).rgb;
+	// vec3 specularLight = SRGBtoLINEAR(textureCube(u_SpecularEnvSampler, reflection)).rgb;
 	#endif
-
-	vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
-	vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
-
+	
+	vec3 diffuse=diffuseLight*pbrInputs.diffuseColor;
+	vec3 specular=specularLight*(pbrInputs.specularColor*brdf.x+brdf.y);
+	
 	// For presentation, this allows us to disable IBL terms
-	diffuse *= scaleIBLAmbient.x;
-	specular *= scaleIBLAmbient.y;
-
-	return diffuse + specular;
+	diffuse*=scaleIBLAmbient.x;
+	specular*=scaleIBLAmbient.y;
+	
+	return diffuse+specular;
 }
 
-float near = 0.1; 
-float far  = 100.0; 
-  
-float LinearizeDepth(float depth) 
+float near=.1;
+float far=100.;
+
+float LinearizeDepth(float depth)
 {
-    float z = depth * 2.0 - 1.0; // back to NDC 
-    return (2.0 * near * far) / (far + near - z * (far - near));	
+	float z=depth*2.-1.;// back to NDC
+	return(2.*near*far)/(far+near-z*(far-near));
 }
 
 vec3 diffuse(PBRInfo pbrInputs)
 {
-	return pbrInputs.diffuseColor / M_PI;
+	return pbrInputs.diffuseColor/M_PI;
 }
-
 
 vec3 specularReflection(PBRInfo pbrInputs)
 {
-	return pbrInputs.reflectance0 + (pbrInputs.reflectance90 - pbrInputs.reflectance0) * pow(clamp(1.0 - pbrInputs.VdotH, 0.0, 1.0), 5.0);
+	return pbrInputs.reflectance0+(pbrInputs.reflectance90-pbrInputs.reflectance0)*pow(clamp(1.-pbrInputs.VdotH,0.,1.),5.);
 }
 
 float geometricOcclusion(PBRInfo pbrInputs)
 {
-	float NdotL = pbrInputs.NdotL;
-	float NdotV = pbrInputs.NdotV;
-	float r = pbrInputs.alphaRoughness;
-
-	float attenuationL = 2.0 * NdotL / (NdotL + sqrt(r * r + (1.0 - r * r) * (NdotL * NdotL)));
-	float attenuationV = 2.0 * NdotV / (NdotV + sqrt(r * r + (1.0 - r * r) * (NdotV * NdotV)));
-	return attenuationL * attenuationV;
+	float NdotL=pbrInputs.NdotL;
+	float NdotV=pbrInputs.NdotV;
+	float r=pbrInputs.alphaRoughness;
+	
+	float attenuationL=2.*NdotL/(NdotL+sqrt(r*r+(1.-r*r)*(NdotL*NdotL)));
+	float attenuationV=2.*NdotV/(NdotV+sqrt(r*r+(1.-r*r)*(NdotV*NdotV)));
+	return attenuationL*attenuationV;
 }
-
 
 float microfacetDistribution(PBRInfo pbrInputs)
 {
-	float roughnessSq = pbrInputs.alphaRoughness * pbrInputs.alphaRoughness;
-	float f = (pbrInputs.NdotH * roughnessSq - pbrInputs.NdotH) * pbrInputs.NdotH + 1.0;
-	return roughnessSq / (M_PI * f * f);
+	float roughnessSq=pbrInputs.alphaRoughness*pbrInputs.alphaRoughness;
+	float f=(pbrInputs.NdotH*roughnessSq-pbrInputs.NdotH)*pbrInputs.NdotH+1.;
+	return roughnessSq/(M_PI*f*f);
 }
 
-void main() {
-
-	float perceptualRoughness   = uRoughness;
-	float metallic              = .2;
-	perceptualRoughness         = clamp(perceptualRoughness, c_MinRoughness, 1.0);
-	metallic                    = clamp(metallic, 0.0, 1.0);
-	float alphaRoughness        = perceptualRoughness * perceptualRoughness;
-
-#ifdef HAS_BASECOLORMAP	
-	vec4 baseColor = SRGBtoLINEAR(texture2D(uColorMap, vTextureCoord));
-#else
-	vec4 baseColor              = vec4(baseColor, 1.0);
-#endif	
+void main(){
 	
-	vec3 f0                     = vec3(0.2);
-	vec3 diffuseColor           = baseColor.rgb * (vec3(1.0) - f0);
-	diffuseColor                *= 1.0 - metallic;
-	vec3 specularColor          = mix(f0, baseColor.rgb, metallic);
+	float perceptualRoughness=uRoughness;
+	float metallic=.2;
+	perceptualRoughness=clamp(perceptualRoughness,c_MinRoughness,1.);
+	metallic=clamp(metallic,0.,1.);
+	float alphaRoughness=perceptualRoughness*perceptualRoughness;
+	
+	#ifdef HAS_BASECOLORMAP
+	vec4 baseColor=SRGBtoLINEAR(texture2D(uColorMap,vTextureCoord));
+	#else
+	vec4 baseColor=vec4(baseColor,1.);
+	#endif
+	
+	vec3 f0=vec3(.2);
+	vec3 diffuseColor=baseColor.rgb*(vec3(1.)-f0);
+	diffuseColor*=1.-metallic;
+	vec3 specularColor=mix(f0,baseColor.rgb,metallic);
 	
 	// Compute reflectance.
-	float reflectance           = max(max(specularColor.r, specularColor.g), specularColor.b);
+	float reflectance=max(max(specularColor.r,specularColor.g),specularColor.b);
 	
 	// For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
 	// For very low reflectance range on highly diffuse objects (below 4%), incrementally reduce grazing reflecance to 0%.
-	float reflectance90         = clamp(reflectance * 25.0, 0.0, 1.0);
-	vec3 specularEnvironmentR0  = specularColor.rgb;
-	vec3 specularEnvironmentR90 = vec3(1.0, 1.0, 1.0) * reflectance90;
+	float reflectance90=clamp(reflectance*25.,0.,1.);
+	vec3 specularEnvironmentR0=specularColor.rgb;
+	vec3 specularEnvironmentR90=vec3(1.,1.,1.)*reflectance90;
 	
-	vec3 n                      = getNormal();                             // normal at surface point
-	vec3 v                      = normalize(uCameraPos - vPosition);        // Vector from surface point to camera
-	vec3 l                      = normalize(lightDir);             // Vector from surface point to light
-	vec3 h                      = normalize(l+v);                          // Half vector between both l and v
-	vec3 reflection             = -normalize(reflect(v, n));
+	vec3 n=getNormal();// normal at surface point
+	vec3 v=normalize(uCameraPos-vPosition);// Vector from surface point to camera
+	vec3 l=normalize(lightDir);// Vector from surface point to light
+	vec3 h=normalize(l+v);// Half vector between both l and v
+	vec3 reflection=-normalize(reflect(v,n));
 	
-	float NdotL                 = clamp(dot(n, l), 0.001, 1.0);
-	float NdotV                 = abs(dot(n, v)) + 0.001;
-	float NdotH                 = clamp(dot(n, h), 0.0, 1.0);
-	float LdotH                 = clamp(dot(l, h), 0.0, 1.0);
-	float VdotH                 = clamp(dot(v, h), 0.0, 1.0);
-
-	PBRInfo pbrInputs = PBRInfo(
+	float NdotL=clamp(dot(n,l),.001,1.);
+	float NdotV=abs(dot(n,v))+.001;
+	float NdotH=clamp(dot(n,h),0.,1.);
+	float LdotH=clamp(dot(l,h),0.,1.);
+	float VdotH=clamp(dot(v,h),0.,1.);
+	
+	PBRInfo pbrInputs=PBRInfo(
 		NdotL,
 		NdotV,
 		NdotH,
@@ -238,56 +228,51 @@ void main() {
 		diffuseColor,
 		specularColor
 	);
-
+	
 	// Calculate the shading terms for the microfacet specular shading model
-	vec3 F              = specularReflection(pbrInputs);
-	float G             = geometricOcclusion(pbrInputs);
-	float D             = microfacetDistribution(pbrInputs);
+	vec3 F=specularReflection(pbrInputs);
+	float G=geometricOcclusion(pbrInputs);
+	float D=microfacetDistribution(pbrInputs);
 	
 	// Calculation of analytical lighting contribution
-	vec3 diffuseContrib = (1.0 - F) * diffuse(pbrInputs);
+	vec3 diffuseContrib=(1.-F)*diffuse(pbrInputs);
 	// vec3 specContrib    = F * G * D / (4.0 * NdotL * NdotV);
 	// Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
 	// vec3 color          = NdotL * uLightColor * (diffuseContrib + specContrib); // HERE remove
-	vec3 color          = NdotL * lightColor * (diffuseContrib); // HERE remove
+	vec3 color=NdotL*lightColor*(diffuseContrib);// HERE remove
 	
-#ifdef USE_IBL
-	color += getIBLContribution(pbrInputs, n, reflection);
-#endif
-
-#ifdef HAS_OCCLUSIONMAP	
-	float ao            = texture2D(uAoMap, vTextureCoord).r;
-	color               = mix(color, color * ao, uOcclusionStrength);
-#endif	
-
-#ifdef HAS_EMISSIVEMAP
-    vec3 emissive = SRGBtoLINEAR(texture2D(uEmissiveMap, vTextureCoord)).rgb * uEmissiveFactor;
-    color += emissive;
-#endif
+	#ifdef USE_IBL
+	color+=getIBLContribution(pbrInputs,n,reflection);
+	#endif
+	
+	#ifdef HAS_OCCLUSIONMAP
+	float ao=texture2D(uAoMap,vTextureCoord).r;
+	color=mix(color,color*ao,uOcclusionStrength);
+	#endif
+	
+	#ifdef HAS_EMISSIVEMAP
+	vec3 emissive=SRGBtoLINEAR(texture2D(uEmissiveMap,vTextureCoord)).rgb*uEmissiveFactor;
+	color+=emissive;
+	#endif
 	
 	// This section uses mix to override final color for reference app visualization
 	// of various parameters in the lighting equation.
-	color               = mix(color, F, scaleFGDSpec.x);
-	color               = mix(color, vec3(G), scaleFGDSpec.y);
-	color               = mix(color, vec3(D), scaleFGDSpec.z);
+	color=mix(color,F,scaleFGDSpec.x);
+	color=mix(color,vec3(G),scaleFGDSpec.y);
+	color=mix(color,vec3(D),scaleFGDSpec.z);
 	// color               = mix(color, specContrib, scaleFGDSpec.w);
 	
-	color               = mix(color, diffuseContrib, scaleDiffBaseMR.x);
-	color               = mix(color, baseColor.rgb, scaleDiffBaseMR.y);
-	color               = mix(color, vec3(metallic), scaleDiffBaseMR.z);
-	color               = mix(color, vec3(perceptualRoughness), scaleDiffBaseMR.w);
-
-	vec2 uvInversed = vec2(1. - vTextureCoord.x, 1. - vTextureCoord.y);
-	// vec2 uvInversed = vec2(vTextureCoord.x, vTextureCoord.y);
-	float depth = 1. - LinearizeDepth(texture2D(uTextureReflection, uvInversed).r) / far;
-	float zTextDepth = 1. - texture2D(uTextureReflection, vTextureCoord).r;
+	color=mix(color,diffuseContrib,scaleDiffBaseMR.x);
+	color=mix(color,baseColor.rgb,scaleDiffBaseMR.y);
+	color=mix(color,vec3(metallic),scaleDiffBaseMR.z);
+	color=mix(color,vec3(perceptualRoughness),scaleDiffBaseMR.w);
 	
-	// if (gl_FragCoord.z > zTextDepth) discard;
 	// output the fragment color
-	vec3 fColor = pow(color,vec3(1.0/2.2));
-	// gl_FragColor        = vec4(fColor, baseColor.a * uAlpha);
-	gl_FragColor        = vec4(vec3(depth), 1.);
+	vec3 fColor=pow(color,vec3(1./2.2));
+	
+	gl_FragColor=vec4(fColor,baseColor.a*uAlpha);
+	// gl_FragColor=vec4(vec3(fColor),1.);
 	// gl_FragColor        = vec4(reflectColor, baseColor.a * uAlpha);
 	// gl_FragColor        = vec4(, baseColor.a);
-
+	
 }

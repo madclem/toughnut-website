@@ -15,8 +15,8 @@ export default class ViewCube extends alfrid.View3D {
   render() {
     this.tick++;
     this.z = Math.cos(this.tick / 40);
-    this.y = Math.sin(this.tick / 50);
-    this.x = Math.sin(this.tick / 30);
+    // this.y = Math.sin(this.tick / 50);
+    // this.x = Math.sin(this.tick / 30);
     this.rotationX += 0.01;
     this.rotationY -= 0.01;
     this.shader.bind();

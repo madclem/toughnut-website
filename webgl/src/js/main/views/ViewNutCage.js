@@ -201,7 +201,9 @@ export class ViewNutCage extends Entity3D {
 		textureRad.bind(3);
 		textureIrr.bind(2);
 
-		this.shader.uniform('uTextureReflection', 'uniform1i', 4);
+		// this.shader.uniform('uTextureReflection', 'uniform1i', 4);
+		// textureReflection.bind(4);
+		this.shader.uniform('uTextureDepth', 'uniform1i', 4);
 		textureReflection.bind(4);
 
 		if (this._dirty) {

@@ -6,10 +6,9 @@ export default class ViewPlane extends alfrid.View3D {
   constructor() {
     super(vs, fs);
 
-    this.simpleShader = new alfrid.GLShader(vsSimple, fsSimple);
-
     const size = 2;
-    this.mesh = alfrid.Geom.cube(size, size, size);
+    // this.mesh = alfrid.Geom.cube(size, size, size);
+    this.mesh = alfrid.Geom.sphere(1.5, 30);
   }
 
   render(texture, textureDepth) {
