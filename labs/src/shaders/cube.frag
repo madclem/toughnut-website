@@ -45,6 +45,7 @@ void main(void) {
 
     // if (depth > depthFromZBuffer) discard;
     // gl_FragColor = texture2D(texture, vTextureCoord);
-    gl_FragColor = vec4(vec3(gl_FragCoord.z), 1.);
+    // gl_FragColor = vec4(vec3(gl_FragCoord.z), 1.);
+    gl_FragColor = vec4(vec3(1., 0., 0.), 1.);
     // gl_FragColor = vec4(vec3(depthFromZBuffer), .2);
 }
